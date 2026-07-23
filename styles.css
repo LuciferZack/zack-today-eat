@@ -127,6 +127,43 @@ textarea:focus {
   gap: 16px;
 }
 
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.sync-pill[data-status="synced"] {
+  color: #143d33;
+  background: #dff0e9;
+}
+
+.sync-pill[data-status="pending"] {
+  color: #603f05;
+  background: #f5e7bf;
+}
+
+.sync-pill[data-status="error"] {
+  color: #7b2c1e;
+  background: #f7ded8;
+}
+
 .app-nav {
   display: inline-flex;
   gap: 8px;
@@ -435,6 +472,35 @@ body[data-view="room"] .hero__content {
 
 body[data-view="room"] .brand-line {
   color: var(--muted);
+}
+
+body[data-view="room"] .sync-pill,
+body[data-view="result"] .sync-pill,
+body[data-view="admin"] .sync-pill {
+  border-color: var(--line);
+  color: var(--muted);
+  background: #fff;
+}
+
+body[data-view="room"] .sync-pill[data-status="synced"],
+body[data-view="result"] .sync-pill[data-status="synced"],
+body[data-view="admin"] .sync-pill[data-status="synced"] {
+  color: #143d33;
+  background: #dff0e9;
+}
+
+body[data-view="room"] .sync-pill[data-status="pending"],
+body[data-view="result"] .sync-pill[data-status="pending"],
+body[data-view="admin"] .sync-pill[data-status="pending"] {
+  color: #603f05;
+  background: #f5e7bf;
+}
+
+body[data-view="room"] .sync-pill[data-status="error"],
+body[data-view="result"] .sync-pill[data-status="error"],
+body[data-view="admin"] .sync-pill[data-status="error"] {
+  color: #7b2c1e;
+  background: #f7ded8;
 }
 
 body[data-view="room"] .app-nav {
@@ -1312,6 +1378,12 @@ tr:last-child td {
   .topbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .topbar-actions {
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .app-nav {

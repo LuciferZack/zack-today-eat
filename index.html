@@ -17,10 +17,13 @@
               <span class="brand-mark" aria-hidden="true">食</span>
               <span>zack今天吃什么</span>
             </div>
-            <nav class="app-nav" aria-label="入口">
-              <a href="#entry" id="userEntryLink">用户入口</a>
-              <a href="#admin" id="adminEntryLink">后台</a>
-            </nav>
+            <div class="topbar-actions">
+              <span class="sync-pill" id="syncStatus">本地模式</span>
+              <nav class="app-nav" aria-label="入口">
+                <a href="#entry" id="userEntryLink">用户入口</a>
+                <a href="#admin" id="adminEntryLink">后台</a>
+              </nav>
+            </div>
           </div>
           <div class="hero__grid">
             <div class="hero__copy">
@@ -286,6 +289,8 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

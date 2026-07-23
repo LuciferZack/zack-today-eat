@@ -3,6 +3,10 @@ const LEGACY_STORAGE_KEY = "mealDecisionPickerRoomStateV2";
 const NEW_MEMBER_VALUE = "__new_member__";
 const ADMIN_PASSWORD = "1";
 const ADMIN_SESSION_KEY = "mealDecisionPickerAdminUnlocked";
+const CLOUD_TABLE_NAME = "app_state";
+const CLOUD_ROW_ID = "global";
+const CLOUD_SAVE_DELAY_MS = 600;
+const CLOUD_POLL_INTERVAL_MS = 5000;
 
 const defaultFoodOptions = [
   { id: "hotpot", name: "火锅", tags: ["聚餐", "辣", "牛羊肉"] },
@@ -68,8 +72,16 @@ const defaultState = {
 };
 
 let state = loadState();
+let cloudClient = createSupabaseClient();
+let cloudReady = false;
+let cloudSaveTimer = null;
+let cloudPollTimer = null;
+let isApplyingRemoteState = false;
+let hasQueuedCloudSave = false;
+let lastCloudUpdatedAt = "";
 
 const elements = {
+  syncStatus: document.querySelector("#syncStatus"),
   resultName: document.querySelector("#resultName"),
   resultMeta: document.querySelector("#resultMeta"),
   primaryActionButton: document.querySelector("#primaryActionButton"),
@@ -130,6 +142,7 @@ const elements = {
 };
 
 route();
+hydrateCloudState();
 
 function loadState() {
   try {
@@ -195,7 +208,154 @@ function cloneDefaultFoods() {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  saveLocalState();
+  if (cloudClient && (!cloudReady || isApplyingRemoteState)) {
+    hasQueuedCloudSave = true;
+    return;
+  }
+  scheduleCloudSave();
+}
+
+function saveLocalState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.warn("Local save failed", error);
+  }
+}
+
+function createSupabaseClient() {
+  const config = window.ZACK_EAT_CONFIG || {};
+  const url = String(config.supabaseUrl || "").trim();
+  const anonKey = String(config.supabaseAnonKey || "").trim();
+
+  if (!url || !anonKey || !window.supabase?.createClient) {
+    return null;
+  }
+
+  return window.supabase.createClient(url, anonKey);
+}
+
+function setSyncStatus(text, status = "local") {
+  if (!elements.syncStatus) return;
+  elements.syncStatus.textContent = text;
+  elements.syncStatus.dataset.status = status;
+}
+
+async function hydrateCloudState() {
+  if (!cloudClient) {
+    setSyncStatus("本地模式", "local");
+    return;
+  }
+
+  setSyncStatus("连接云端", "pending");
+
+  try {
+    const row = await fetchCloudState();
+    if (row?.data) {
+      applyRemoteState(row);
+      setSyncStatus("云端已同步", "synced");
+    } else {
+      cloudReady = true;
+      hasQueuedCloudSave = false;
+      await pushCloudState();
+      setSyncStatus("云端已初始化", "synced");
+    }
+
+    cloudReady = true;
+    if (hasQueuedCloudSave) {
+      hasQueuedCloudSave = false;
+      scheduleCloudSave();
+    }
+    startCloudPolling();
+  } catch (error) {
+    console.warn("Cloud sync init failed", error);
+    cloudReady = false;
+    setSyncStatus("云端未连接", "error");
+  }
+}
+
+async function fetchCloudState() {
+  const { data, error } = await cloudClient
+    .from(CLOUD_TABLE_NAME)
+    .select("data, updated_at")
+    .eq("id", CLOUD_ROW_ID)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+function applyRemoteState(row) {
+  if (!row?.data) return false;
+  if (row.updated_at && row.updated_at === lastCloudUpdatedAt) return false;
+
+  isApplyingRemoteState = true;
+  try {
+    state = normalizeState(row.data);
+    lastCloudUpdatedAt = row.updated_at || "";
+    saveLocalState();
+    route();
+  } finally {
+    isApplyingRemoteState = false;
+  }
+
+  return true;
+}
+
+function scheduleCloudSave() {
+  if (!cloudClient || !cloudReady || isApplyingRemoteState) return;
+  hasQueuedCloudSave = false;
+  window.clearTimeout(cloudSaveTimer);
+  setSyncStatus("正在同步", "pending");
+  cloudSaveTimer = window.setTimeout(async () => {
+    cloudSaveTimer = null;
+    try {
+      await pushCloudState();
+    } catch (error) {
+      console.warn("Cloud save failed", error);
+      setSyncStatus("同步失败", "error");
+    }
+  }, CLOUD_SAVE_DELAY_MS);
+}
+
+async function pushCloudState() {
+  const { data, error } = await cloudClient
+    .from(CLOUD_TABLE_NAME)
+    .upsert(
+      {
+        id: CLOUD_ROW_ID,
+        data: state,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    )
+    .select("updated_at")
+    .single();
+
+  if (error) throw error;
+  lastCloudUpdatedAt = data?.updated_at || "";
+  setSyncStatus("云端已同步", "synced");
+  return data;
+}
+
+function startCloudPolling() {
+  window.clearInterval(cloudPollTimer);
+  cloudPollTimer = window.setInterval(refreshCloudState, CLOUD_POLL_INTERVAL_MS);
+}
+
+async function refreshCloudState() {
+  if (!cloudClient || !cloudReady || cloudSaveTimer) return;
+
+  try {
+    const row = await fetchCloudState();
+    if (applyRemoteState(row)) {
+      setSyncStatus("云端已同步", "synced");
+    }
+  } catch (error) {
+    console.warn("Cloud refresh failed", error);
+    setSyncStatus("同步延迟", "error");
+  }
 }
 
 function createId(prefix) {
