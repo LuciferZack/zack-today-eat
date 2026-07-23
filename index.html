@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>zack今天吃什么</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="app-title">
+        <div class="hero__image" aria-hidden="true"></div>
+        <div class="hero__shade" aria-hidden="true"></div>
+        <div class="hero__content">
+          <div class="topbar">
+            <div class="brand-line">
+              <span class="brand-mark" aria-hidden="true">食</span>
+              <span>zack今天吃什么</span>
+            </div>
+            <nav class="app-nav" aria-label="入口">
+              <a href="#entry" id="userEntryLink">用户入口</a>
+              <a href="#admin" id="adminEntryLink">后台</a>
+            </nav>
+          </div>
+          <div class="hero__grid">
+            <div class="hero__copy">
+              <h1 id="app-title">zack今天吃什么</h1>
+              <p>输入房间号进入饭局，每个人只提交自己的名字、想吃和不想吃，确认后直接查看结果池。</p>
+            </div>
+            <section class="draw-board" aria-live="polite">
+              <div>
+                <p class="eyebrow">当前状态</p>
+                <h2 id="resultName">用户入口</h2>
+                <p id="resultMeta">输入房间号开始</p>
+              </div>
+              <div class="draw-actions">
+                <button class="button button--primary" id="primaryActionButton" type="button">
+                  <span aria-hidden="true">↻</span>
+                  <span>进入当前房间</span>
+                </button>
+                <button class="button button--quiet" id="copyRoomLinkButton" type="button">
+                  <span aria-hidden="true">↗</span>
+                  <span>复制房间链接</span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="status-strip" aria-label="当前概览">
+        <div>
+          <strong id="roomCount">0</strong>
+          <span>房间</span>
+        </div>
+        <div>
+          <strong id="memberCount">0</strong>
+          <span>当前房间成员</span>
+        </div>
+        <div>
+          <strong id="finalCount">0</strong>
+          <span>结果池</span>
+        </div>
+        <div>
+          <strong id="blockedCount">0</strong>
+          <span>已排除</span>
+        </div>
+      </section>
+
+      <section class="view view--active" id="entryView" aria-label="用户入口">
+        <section class="entry-grid">
+          <article class="panel panel--entry">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">用户入口</p>
+                <h2>输入房间号</h2>
+              </div>
+            </div>
+            <form class="stacked-form" id="roomCodeForm">
+              <label>
+                <span>房间号</span>
+                <input id="roomCodeInput" name="roomCode" autocomplete="off" placeholder="比如 8888 或 friday-dinner" required />
+              </label>
+              <button class="button button--primary" type="submit">
+                <span aria-hidden="true">→</span>
+                <span>进入房间</span>
+              </button>
+            </form>
+            <div class="quick-room-list" id="quickRoomList"></div>
+          </article>
+        </section>
+      </section>
+
+      <section class="view" id="roomView" aria-label="房间填写">
+        <section class="workspace workspace--room">
+          <section class="panel panel--preferences">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">房间</p>
+                <h2 id="roomTitle">房间号</h2>
+              </div>
+              <div class="panel-actions">
+                <button class="text-button" id="copyRoomLinkInlineButton" type="button">复制链接</button>
+                <a class="text-button text-button--link" id="backToEntryFromRoom" href="#entry">换房间</a>
+              </div>
+            </div>
+
+            <form class="preference-form" id="preferenceForm">
+              <label>
+                <span>我的名字</span>
+                <select id="memberSelect" name="memberSelect"></select>
+              </label>
+              <label class="new-member-field" id="newMemberField">
+                <span>新成员名字</span>
+                <input id="memberNameInput" name="memberName" autocomplete="off" placeholder="比如 小林" />
+              </label>
+              <details class="choice-menu" id="wantMenu">
+                <summary>
+                  <span>想吃什么</span>
+                  <strong id="wantSummary">未选择</strong>
+                </summary>
+                <div class="choice-grid" id="wantOptions"></div>
+              </details>
+              <details class="choice-menu" id="avoidMenu">
+                <summary>
+                  <span>不想吃什么</span>
+                  <strong id="avoidSummary">未选择</strong>
+                </summary>
+                <div class="choice-grid" id="avoidOptions"></div>
+              </details>
+              <p class="form-note" id="formMessage"></p>
+              <button class="button button--primary" type="submit">
+                <span aria-hidden="true">✓</span>
+                <span>确认并查看结果池</span>
+              </button>
+            </form>
+          </section>
+
+          <section class="panel panel--foods">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">菜品池</p>
+                <h2>本房间菜系</h2>
+              </div>
+            </div>
+            <form class="food-pool-form" id="foodPoolForm">
+              <label>
+                <span>菜系名称</span>
+                <input id="foodNameInput" name="foodName" autocomplete="off" placeholder="比如 湘菜" required />
+              </label>
+              <label>
+                <span>标签</span>
+                <input id="foodTagsInput" name="foodTags" autocomplete="off" placeholder="辣、米饭、聚餐" />
+              </label>
+              <button class="button button--secondary" type="submit">
+                <span aria-hidden="true">＋</span>
+                <span>加入本房间</span>
+              </button>
+            </form>
+            <div class="item-list room-food-list" id="roomFoodList" aria-label="本房间菜品池"></div>
+          </section>
+
+          <section class="panel panel--members">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">当前房间</p>
+                <h2>已提交成员</h2>
+              </div>
+            </div>
+            <div class="item-list" id="memberList" aria-label="成员提交列表"></div>
+          </section>
+        </section>
+      </section>
+
+      <section class="view" id="resultView" aria-label="结果池">
+        <section class="workspace workspace--result">
+          <section class="panel panel--decision">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">结果池</p>
+                <h2 id="resultRoomTitle">排除后留下的</h2>
+              </div>
+              <select id="statusFilter" aria-label="筛选结果">
+                <option value="final">结果池</option>
+                <option value="available">未排除</option>
+                <option value="blocked">已排除</option>
+                <option value="all">全部</option>
+              </select>
+            </div>
+            <div class="chart-grid" aria-label="投票分布">
+              <section class="chart-card">
+                <div class="chart-card__head">
+                  <h3>想吃分布</h3>
+                  <span id="wantChartTotal">0 票</span>
+                </div>
+                <div id="wantChart"></div>
+              </section>
+              <section class="chart-card">
+                <div class="chart-card__head">
+                  <h3>不想吃分布</h3>
+                  <span id="avoidChartTotal">0 票</span>
+                </div>
+                <div id="avoidChart"></div>
+              </section>
+            </div>
+            <div class="decision-actions">
+              <a class="button button--quiet link-button" id="editMyChoiceLink" href="#entry">
+                <span aria-hidden="true">←</span>
+                <span>继续提交</span>
+              </a>
+              <button class="button button--primary" id="drawButton" type="button">
+                <span aria-hidden="true">↻</span>
+                <span>从结果池定一个</span>
+              </button>
+            </div>
+            <div class="item-list food-list" id="foodList" aria-label="结果列表"></div>
+          </section>
+
+          <section class="panel panel--history">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">记录</p>
+                <h2>最近定下</h2>
+              </div>
+              <button class="text-button" id="clearHistoryButton" type="button">清空</button>
+            </div>
+            <ol id="historyList"></ol>
+          </section>
+        </section>
+      </section>
+
+      <section class="view" id="adminView" aria-label="后台">
+        <section class="entry-grid" id="adminLoginPanel">
+          <article class="panel panel--entry">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">后台</p>
+                <h2>输入后台密码</h2>
+              </div>
+            </div>
+            <form class="stacked-form" id="adminPasswordForm">
+              <label>
+                <span>密码</span>
+                <input id="adminPasswordInput" name="adminPassword" type="password" autocomplete="current-password" placeholder="请输入密码" required />
+              </label>
+              <p class="form-note" id="adminPasswordMessage"></p>
+              <button class="button button--primary" type="submit">
+                <span aria-hidden="true">→</span>
+                <span>进入后台</span>
+              </button>
+            </form>
+          </article>
+        </section>
+
+        <section class="admin-layout" id="adminContent">
+          <section class="panel panel--admin">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">后台</p>
+                <h2>所有房间</h2>
+              </div>
+              <div class="panel-actions">
+                <button class="button button--quiet" id="exportDataButton" type="button">
+                  <span aria-hidden="true">⇩</span>
+                  <span>导出数据</span>
+                </button>
+                <button class="button button--quiet" id="adminLogoutButton" type="button">
+                  <span aria-hidden="true">×</span>
+                  <span>退出</span>
+                </button>
+              </div>
+            </div>
+            <div class="admin-room-list" id="adminRoomList"></div>
+          </section>
+
+          <section class="panel panel--admin-detail">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">房间数据</p>
+                <h2 id="adminDetailTitle">选择一个房间</h2>
+              </div>
+            </div>
+            <div id="adminDetail"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
